@@ -1,0 +1,41 @@
+#!/bin/bash
+
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+OUTPUT_DIR="pokemon_data"
+BASE_URL="https://pokeapi.co/api/v2/pokemon"
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "Starting parallel Pokemon data retrieval..."
+
+fetch_pokemon_parallel() {
+    local pokemon=$1
+    echo "Fetching data for $pokemon..."
+    
+    if curl -s -f "$BASE_URL/$pokemon" -o "$OUTPUT_DIR/${pokemon}.json"; then
+        echo "Saved data to $OUTPUT_DIR/${pokemon}.json ✅"
+    else
+        echo "Failed to fetch data for $pokemon ❌"
+        echo "$(date): Failed to fetch data for $pokemon" >> errors.txt
+    fi
+}
+
+declare -a pids=()
+
+for pokemon in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon_parallel "$pokemon" &
+    pids+=($!)
+done
+
+echo "All fetch processes started. Waiting for completion..."
+
+for pid in "${pids[@]}"; do
+    wait $pid
+    exit_status=$?
+    if [ $exit_status -ne 0 ]; then
+        echo "Process $pid failed with exit status $exit_status"
+    fi
+done
+
+echo "All parallel processes completed!"
+echo "Parallel batch processing complete!"

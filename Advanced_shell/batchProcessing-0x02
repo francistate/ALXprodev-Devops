@@ -1,0 +1,41 @@
+#!/bin/bash
+
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+OUTPUT_DIR="pokemon_data"
+BASE_URL="https://pokeapi.co/api/v2/pokemon"
+MAX_RETRIES=3
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "Starting batch Pokemon data retrieval with retry logic..."
+
+fetch_pokemon() {
+    local pokemon=$1
+    local retries=0
+    
+    while [ $retries -lt $MAX_RETRIES ]; do
+        echo "Fetching data for $pokemon (attempt $((retries + 1))/$MAX_RETRIES)..."
+        
+        if curl -s -f "$BASE_URL/$pokemon" -o "$OUTPUT_DIR/${pokemon}.json"; then
+            echo "Saved data to $OUTPUT_DIR/${pokemon}.json ✅"
+            return 0
+        else
+            ((retries++))
+            if [ $retries -lt $MAX_RETRIES ]; then
+                echo "Retry attempt $retries for $pokemon after failure"
+                sleep 2
+            fi
+        fi
+    done
+    
+    echo "Failed to fetch data for $pokemon after $MAX_RETRIES attempts ❌"
+    echo "$(date): Failed to fetch data for $pokemon after $MAX_RETRIES attempts" >> errors.txt
+    return 1
+}
+
+for pokemon in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon "$pokemon"
+    sleep 1
+done
+
+echo "Batch processing complete!"
