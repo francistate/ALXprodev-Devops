@@ -7,9 +7,12 @@ if [ ! -f "$DATA_FILE" ]; then
     exit 1
 fi
 
-NAME=$(jq -r '.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
-TYPE=$(jq -r '.types[0].type.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
-WEIGHT=$(jq -r '.weight' "$DATA_FILE" | awk '{printf "%.0f", $1/10}')
-HEIGHT=$(jq -r '.height' "$DATA_FILE" | awk '{printf "%.1f", $1/10}')
+name=$(jq -r '.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+type=$(jq -r '.types[0].type.name' "$DATA_FILE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+formatted_weight=$(jq -r '.weight' "$DATA_FILE" | awk '{printf "%.0f", $1/10}')
+formatted_height=$(jq -r '.height' "$DATA_FILE" | awk '{printf "%.1f", $1/10}')
 
-echo "$NAME is of type $TYPE, weighs ${WEIGHT}kg, and is ${HEIGHT}m tall."
+name=$(echo "$name" | sed 's/.*/\u&/')
+type=$(echo "$type" | sed 's/.*/\u&/')
+
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
